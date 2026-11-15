@@ -6,10 +6,11 @@ Recurso docente interactivo para explorar en 3D qué estructuras del cerebro par
 
 ## Qué contiene
 
-- **Anatomía:** diez estructuras del circuito límbico y de recompensa, con su localización y función.
-- **Tareas:** catorce mapas de activación del Human Connectome Project (emoción, recompensa, cognición social, lenguaje, memoria de trabajo, percepción y movimiento).
+- **Anatomía:** veintitrés estructuras con su localización y función: diez del circuito límbico y de recompensa, los ganglios basales y el tálamo, tres zonas de corteza de control, los cuatro lóbulos, el cerebelo y el tronco del encéfalo.
+- **Human Connectome Project:** dieciocho mapas de activación de sus siete tareas (emoción, recompensa, cognición social, lenguaje, memoria de trabajo, percepción y movimiento).
 - **Conceptos:** diecisiete mapas de NeuroQuery (miedo, estrés postraumático, agresión, impulsividad, craving, empatía, etc.).
-- **Comparar:** actividad media de cada estructura en cada tarea.
+- **Comparar:** actividad media de cada estructura en cada tarea del Human Connectome Project.
+- **Ponte a prueba:** rondas de diez preguntas de autoevaluación sobre estructuras, funciones y lectura de mapas. No registra resultados.
 
 Toda la web está en un único archivo, `index.html`, que funciona sin conexión.
 
