@@ -219,6 +219,35 @@
   .veredicto.mal { color: var(--mas); }
   .boton { margin-top: 20px; border-color: var(--marca); font-weight: 700; }
   .ficha .resultado { font-family: var(--titulo); font-size: 54px; font-weight: 700; line-height: 1; margin: 6px 0 14px; }
+
+  /* ----- Móvil: cabecera compacta, cerebro más bajo, aviso de que hay texto debajo
+           y, en Ponte a prueba, la pregunta justo debajo de un cerebro pequeño ----- */
+  .a-ficha { display: none; }
+  @media (max-width: 900px) {
+    header { gap: 6px 10px; padding: 8px 12px; }
+    header .nombre { font-size: 16px; }
+    .modo { order: 1; padding: 4px 10px; font-size: 12.5px; }
+    .pestanas { order: 2; width: 100%; flex-wrap: nowrap; overflow-x: auto; gap: 2px; scrollbar-width: none; }
+    .pestanas::-webkit-scrollbar { display: none; }
+    .pestanas a { white-space: nowrap; padding: 6px 9px; font-size: 14px; flex: none; }
+    .lista { padding: 8px 12px; }
+    .lienzo { height: 48vh; height: 48svh; }
+    .a-ficha { display: block; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 6;
+               font: inherit; font-size: 14px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer;
+               color: var(--tinta); background: var(--papel); border: 1px solid var(--marca); box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+    .explorador.en-prueba .a-ficha { display: none; }
+    .explorador.en-prueba .lienzo { height: 34vh; height: 34svh; }
+    .explorador.en-prueba .barra { display: none; }
+    .explorador.en-prueba #lista { align-items: center; }
+    .explorador.en-prueba #lista button { padding: 7px 11px; }
+    .explorador.en-prueba .marcador { margin: 0 0 0 6px; white-space: nowrap; flex: none; }
+    .explorador.en-prueba .marcador br { display: none; }
+    .explorador.en-prueba .marcador b { font-size: 16px; margin-left: 4px; }
+    .explorador.en-prueba .ficha { padding-top: 14px; }
+    .explorador.en-prueba .ficha h3 { font-size: 19px; }
+    .explorador.en-prueba .opciones { margin-top: 12px; gap: 6px; }
+    .explorador.en-prueba .opciones button { padding: 9px 12px; font-size: 15px; }
+  }
 </style>
 </head>
 <body>
@@ -281,6 +310,7 @@
     </aside>
     <div class="lienzo">
       <div id="cerebro"></div>
+      <button class="a-ficha" id="a-ficha" type="button">Leer la explicación ↓</button>
       <div class="barra">
         <div class="vistas" role="group" aria-label="Punto de vista">
           <button data-v="izq">Izquierda</button><button data-v="der">Derecha</button>
@@ -812,6 +842,7 @@ function ruta(nombre) {
   const h = nombre || (location.hash || "#inicio").slice(1);
   modo = SECCIONES.includes(h) ? h : "inicio";
   const explora = modo in MODOS || modo === "prueba";
+  $("v-explorador").classList.toggle("en-prueba", modo === "prueba");
   $("v-inicio").hidden = modo !== "inicio";
   $("v-comparar").hidden = modo !== "comparar";
   $("v-explorador").hidden = !explora;
@@ -906,7 +937,7 @@ function pintaPrueba() {
   }
   f.innerHTML = h;
   if (prueba.respondida) {
-    $("p-sig").onclick = () => { if (prueba.n < RONDA) nuevaPregunta(); else prueba.q = null; pintaPrueba(); };
+    $("p-sig").onclick = () => { if (prueba.n < RONDA) nuevaPregunta(); else prueba.q = null; pintaPrueba(); if (innerWidth <= 900) $("v-explorador").scrollIntoView({ block: "start" }); };
     $("p-sig").focus();
   } else {
     f.querySelectorAll(".opciones button").forEach(b => b.onclick = () => {
@@ -934,6 +965,7 @@ function ponTema(t) {
 $("modo").onclick = () => ponTema(document.documentElement.dataset.tema === "claro" ? "oscuro" : "claro");
 try { ponTema(localStorage.getItem("tema") || "oscuro"); } catch (e) { ponTema("oscuro"); }
 
+$("a-ficha").onclick = () => $("ficha").scrollIntoView({ behavior: "smooth", block: "start" });
 window.addEventListener("hashchange", () => ruta());
 ruta();
 </script>
