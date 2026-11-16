@@ -222,7 +222,7 @@
 
   /* ----- Móvil: cabecera compacta, cerebro más bajo, aviso de que hay texto debajo
            y, en Ponte a prueba, la pregunta justo debajo de un cerebro pequeño ----- */
-  .a-ficha { display: none; }
+  .zoom { display: none; }
   @media (max-width: 900px) {
     header { gap: 6px 10px; padding: 8px 12px; }
     header .nombre { font-size: 16px; }
@@ -231,12 +231,19 @@
     .pestanas::-webkit-scrollbar { display: none; }
     .pestanas a { white-space: nowrap; padding: 6px 9px; font-size: 14px; flex: none; }
     .lista { padding: 8px 12px; }
-    .lienzo { height: 48vh; height: 48svh; }
-    .a-ficha { display: block; position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 6;
-               font: inherit; font-size: 14px; font-weight: 700; padding: 8px 16px; border-radius: 20px; cursor: pointer;
-               color: var(--tinta); background: var(--papel); border: 1px solid var(--marca); box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
-    .explorador.en-prueba .a-ficha { display: none; }
-    .explorador.en-prueba .lienzo { height: 34vh; height: 34svh; }
+    /* la barra de vistas y casillas sale del cerebro: va encima, en una fila que se desliza */
+    .lienzo { height: auto; display: flex; flex-direction: column; }
+    #cerebro { position: relative; inset: auto; height: 50vh; height: 50svh; }
+    .barra { position: static; order: -1; flex-wrap: nowrap; overflow-x: auto; padding: 6px 10px; gap: 6px; scrollbar-width: none; border-bottom: 1px solid var(--linea); }
+    .barra::-webkit-scrollbar { display: none; }
+    .barra > * { flex: none; }
+    .vistas { flex-wrap: nowrap; }
+    .casilla { white-space: nowrap; }
+    /* acercar y alejar: dos botones discretos en la esquina, además del gesto de pellizco */
+    .zoom { display: flex; flex-direction: column; gap: 6px; position: absolute; right: 8px; bottom: 8px; z-index: 6; }
+    .zoom button { width: 38px; height: 38px; border-radius: 8px; font-size: 22px; line-height: 1; cursor: pointer; padding: 0;
+                   color: var(--tinta); background: var(--papel); border: 1px solid var(--linea); opacity: 0.85; }
+    .explorador.en-prueba #cerebro { height: 34vh; height: 34svh; }
     .explorador.en-prueba .barra { display: none; }
     .explorador.en-prueba #lista { align-items: center; }
     .explorador.en-prueba #lista button { padding: 7px 11px; }
@@ -310,7 +317,7 @@
     </aside>
     <div class="lienzo">
       <div id="cerebro"></div>
-      <button class="a-ficha" id="a-ficha" type="button">Leer la explicación ↓</button>
+      <div class="zoom" role="group" aria-label="Tamaño del cerebro"><button id="z-mas" type="button" aria-label="Acercar">+</button><button id="z-menos" type="button" aria-label="Alejar">−</button></div>
       <div class="barra">
         <div class="vistas" role="group" aria-label="Punto de vista">
           <button data-v="izq">Izquierda</button><button data-v="der">Derecha</button>
@@ -811,6 +818,30 @@ document.querySelectorAll(".vistas button").forEach(b => b.onclick = () => {
   const [x, y, z] = VISTAS[b.dataset.v], plano = b.dataset.v === "arr" || b.dataset.v === "aba";
   Plotly.relayout(div, { "scene.camera": { eye: { x, y, z }, up: plano ? { x: 0, y: 1, z: 0 } : { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 } } });
 });
+// ---------- acercar y alejar (botones y pellizco con dos dedos) ----------
+function camaraActual() {
+  try { return div._fullLayout.scene._scene.getCamera(); } catch (e) { return (div.layout.scene || {}).camera || { eye: { x: -1.75, y: 0.35, z: 0.35 } }; }
+}
+function acerca(factor) {           // factor < 1 acerca, > 1 aleja
+  const e = camaraActual().eye, d = Math.hypot(e.x, e.y, e.z) || 1;
+  const nuevo = Math.min(4.5, Math.max(0.8, d * factor)), k = nuevo / d;
+  Plotly.relayout(div, { "scene.camera.eye": { x: e.x * k, y: e.y * k, z: e.z * k } });
+}
+$("z-mas").onclick = () => acerca(0.8);
+$("z-menos").onclick = () => acerca(1.25);
+(function () {
+  const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  let previa = 0, pendiente = 1, enCola = false;
+  div.addEventListener("touchstart", e => { if (e.touches.length === 2) { previa = dist(e.touches); e.stopPropagation(); } }, { capture: true, passive: true });
+  div.addEventListener("touchmove", e => {
+    if (e.touches.length !== 2 || !previa) return;
+    e.preventDefault(); e.stopPropagation();
+    const d = dist(e.touches); if (!d) return;
+    pendiente *= previa / d; previa = d;
+    if (!enCola) { enCola = true; requestAnimationFrame(() => { acerca(pendiente); pendiente = 1; enCola = false; }); }
+  }, { capture: true, passive: false });
+  div.addEventListener("touchend", e => { if (e.touches.length < 2) previa = 0; }, { capture: true, passive: true });
+})();
 $("menos").onchange = pinta; $("estr").onchange = pinta;
 $("todas").onclick = () => { elegido.anatomia = null; pinta(); };
 
@@ -965,7 +996,6 @@ function ponTema(t) {
 $("modo").onclick = () => ponTema(document.documentElement.dataset.tema === "claro" ? "oscuro" : "claro");
 try { ponTema(localStorage.getItem("tema") || "oscuro"); } catch (e) { ponTema("oscuro"); }
 
-$("a-ficha").onclick = () => $("ficha").scrollIntoView({ behavior: "smooth", block: "start" });
 window.addEventListener("hashchange", () => ruta());
 ruta();
 </script>
